@@ -7,6 +7,6 @@ services:
       - "5173:5173"
     environment:
       - VITE_API_URL=https://api-muneer.marsdevs.com/
-      - VITE_WS_URL=https://api-muneer.marsdevs.com/
+      - VITE_WS_URL=wss://api-muneer.marsdevs.com/api/v1/chat/agent/ws
     restart: unless-stopped
-    container_name: muneer-frontend
+    container_name: muneer-frontend 
