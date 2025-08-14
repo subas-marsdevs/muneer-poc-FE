@@ -126,3 +126,15 @@
 #root {
   width: 100%;
 }
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-thumb-gray-400 {
+  scrollbar-thumb: hsl(0 0% 63.9%);
+}
+
+.scrollbar-track-gray-100 {
+  scrollbar-track: hsl(0, 0%, 24%);
+}
