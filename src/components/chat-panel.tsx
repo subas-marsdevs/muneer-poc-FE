@@ -33,7 +33,7 @@ export default function ChatPanel() {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/v1/chat/agent`,
+        `https://api-muneer.marsdevs.com/api/v1/chat/agent`,
         {
           method: "POST",
           headers: {

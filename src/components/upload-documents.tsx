@@ -53,7 +53,7 @@ export default function DocumentUpload({
     try {
       await axios.post(
         // "https://api.escuelajs.co/api/v1/files/upload",
-        `${import.meta.env.VITE_API_URL}/api/v1/documents/upload`,
+        `https://api-muneer.marsdevs.com/api/v1/documents/upload`,
         formData,
         {
           headers: {
