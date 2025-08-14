@@ -17,7 +17,7 @@ export default function HomePage() {
   return (
     <>
       <div
-        className={`relative flex h-full max-w-[768px] w-full mx-auto flex-1 flex-col items-center justify-center`}
+        className={`relative flex h-full max-w-[768px] w-full mx-auto flex-1 flex-col items-center justify-center overflow-hidden`}
       >
         <ChatMessages />
         <ChatPanel />

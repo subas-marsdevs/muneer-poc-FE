@@ -25,7 +25,7 @@ export default function ChatMessages() {
       ref={scrollContainerRef}
       role="list"
       aria-roledescription="chat messages"
-      className={`relative pt-14 flex-1 overflow-y-auto w-full`}
+      className={`pt-14 flex-1 overflow-y-auto w-full`}
     >
       {messages.length > 0 ? (
         <div className="relative mx-auto w-full max-w-3xl px-4 h-full pb-4">
@@ -49,7 +49,7 @@ export default function ChatMessages() {
                 {/* Answer */}
                 <div className="flex justify-start">
                   <div className="max-w-full rounded-2xl px-4 py-3 text-foreground bg-muted">
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-3 prose-sm prose-neutral prose-a:text-accent-foreground/50 ">
                       {message.isLoading ? (
                         <div className="flex items-center gap-1 ">
                           <div className="flex space-x-1">
