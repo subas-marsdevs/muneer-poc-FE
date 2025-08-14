@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-        
+
 
       - name: Set up SSH key
         run: |
@@ -26,9 +26,9 @@ jobs:
           ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             cd /home/ubuntu/workspace/muneer-poc-FE
             git pull
-            docker-compose down
-            docker-compose up -d --build
+            sudo docker-compose down
+            sudo docker-compose up -d --build
             sleep 5
-            docker ps
+            sudo docker ps
             echo "✅ Deployment completed successfully!"
           EOF
