@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: .
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=https://api-muneer.marsdevs.com/
+      - VITE_WS_URL=https://api-muneer.marsdevs.com/
+    restart: unless-stopped
+    container_name: muneer-frontend 
