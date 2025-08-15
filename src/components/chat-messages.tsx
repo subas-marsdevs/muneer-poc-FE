@@ -25,7 +25,7 @@ export default function ChatMessages() {
       ref={scrollContainerRef}
       role="list"
       aria-roledescription="chat messages"
-      className={`pt-14 flex-1 overflow-y-auto w-full`}
+      className={`pt-14 flex-1  w-full pb-48`}
     >
       {messages.length > 0 ? (
         <div className="relative mx-auto w-full max-w-3xl px-4 h-full pb-4">

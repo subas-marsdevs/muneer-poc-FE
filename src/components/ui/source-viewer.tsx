@@ -133,35 +133,18 @@ export default function SourceViewer() {
   const highlightChunkText = (fullContent: string, chunkText: string) => {
     if (!chunkText.trim() || !fullContent) return fullContent;
 
-    console.log("Original chunk text:", chunkText);
-    console.log("Original full content length:", fullContent.length);
-
     // Normalize both texts for comparison
     const normalizedChunkText = normalizeText(chunkText);
     const normalizedFullContent = normalizeText(fullContent);
 
-    console.log("Normalized chunk text:", normalizedChunkText);
-    console.log(
-      "Normalized full content length:",
-      normalizedFullContent.length
-    );
-
     // Try to find the exact normalized chunk text in the normalized full content
     const index = normalizedFullContent.indexOf(normalizedChunkText);
 
-    console.log("Found at normalized index:", index);
-
     if (index === -1) {
-      console.log(
-        "No exact normalized match found, trying alternative methods..."
-      );
-
       // If exact match not found, try to find the chunk text in the original content
       const originalIndex = fullContent
         .toLowerCase()
         .indexOf(chunkText.toLowerCase());
-
-      console.log("Found at original index:", originalIndex);
 
       if (originalIndex !== -1) {
         // Found match in original content
@@ -174,12 +157,10 @@ export default function SourceViewer() {
           originalIndex + chunkText.length
         );
 
-        console.log("Highlighting original match");
-
         return (
           <>
             {beforeMatch}
-            <mark className="bg-yellow-200 text-black px-1 rounded animate-pulse">
+            <mark className="bg-[#61597b] text-primary font-semibold px-1 rounded animate-pulse">
               {match}
             </mark>
             {afterMatch}
@@ -189,13 +170,7 @@ export default function SourceViewer() {
 
       // If still no match, try to find sentence-level matches
       const chunkSentences = extractSentences(chunkText);
-      const fullSentences = extractSentences(fullContent);
-
-      console.log(
-        "Trying sentence-level matching with chunk sentences:",
-        chunkSentences
-      );
-      console.log("Available full content sentences:", fullSentences.length);
+      // const fullSentences = extractSentences(fullContent);
 
       if (chunkSentences.length > 0) {
         // Find all sentence matches and create a map of positions
@@ -203,7 +178,6 @@ export default function SourceViewer() {
 
         chunkSentences.forEach((sentence) => {
           const sentenceIndex = fullContent.toLowerCase().indexOf(sentence);
-          console.log(`Sentence "${sentence}" found at index:`, sentenceIndex);
 
           if (sentenceIndex !== -1) {
             matches.push({
@@ -232,7 +206,7 @@ export default function SourceViewer() {
             parts.push(
               <mark
                 key={index}
-                className="bg-yellow-200 text-black px-1 rounded animate-pulse"
+                className="bg-[#61597b] text-primary font-semibold px-1 rounded animate-pulse"
               >
                 {fullContent.substring(match.start, match.end)}
               </mark>
@@ -249,11 +223,6 @@ export default function SourceViewer() {
           return <>{parts}</>;
         }
       }
-
-      // If no sentence matches found, try to find the longest common substring
-      console.log(
-        "No sentence matches found, trying longest common substring..."
-      );
 
       const words = chunkText.split(/\s+/).filter((word) => word.length > 3);
       if (words.length > 0) {
@@ -291,7 +260,7 @@ export default function SourceViewer() {
           return (
             <>
               {beforePhrase}
-              <mark className="bg-yellow-200 text-black px-1 rounded animate-pulse">
+              <mark className="bg-[#61597b] text-primary font-semibold px-1 rounded animate-pulse">
                 {phraseMatch}
               </mark>
               {afterPhrase}

@@ -80,7 +80,7 @@ export default function ChatPanel() {
 
   return (
     <div
-      className={`w-full bg-background group/form-container shrink-0 sticky bottom-0 px-2 pb-7`}
+      className={`w-full bg-background flex flex-col items-center fixed bottom-0 h-fit px-4 pb-4`}
     >
       <form
         onSubmit={handleSubmit}
