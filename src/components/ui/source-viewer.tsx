@@ -104,43 +104,232 @@ export default function SourceViewer() {
     }
   };
 
+  console.log("fileContent", fileContent);
+  console.log("chunkText", selectedSource?.chunk_text);
+
+  // Function to normalize text for better matching
+  const normalizeText = (text: string): string => {
+    return text
+      .replace(/\s+/g, " ") // Replace multiple spaces with single space
+      .replace(/\n+/g, " ") // Replace newlines with spaces
+      .replace(/\r+/g, " ") // Replace carriage returns with spaces
+      .replace(/\t+/g, " ") // Replace tabs with spaces
+      .replace(/[^\w\s.,!?;:()\-]/g, "") // Remove special characters except basic punctuation
+      .trim()
+      .toLowerCase();
+  };
+
+  // Function to extract meaningful sentences from text
+  const extractSentences = (text: string): string[] => {
+    // Split by sentence endings and filter out very short fragments
+    return text
+      .split(/[.!?]+/)
+      .map((sentence) => sentence.trim())
+      .filter((sentence) => sentence.length > 15) // Only sentences longer than 15 characters
+      .map((sentence) => normalizeText(sentence));
+  };
+
   // Function to highlight the chunk text in the complete file content
   const highlightChunkText = (fullContent: string, chunkText: string) => {
     if (!chunkText.trim() || !fullContent) return fullContent;
 
-    // Clean up the chunk text for better matching
-    const cleanChunkText = chunkText.replace(/\s+/g, " ").trim();
-    const cleanFullContent = fullContent.replace(/\s+/g, " ");
+    console.log("Original chunk text:", chunkText);
+    console.log("Original full content length:", fullContent.length);
 
-    // Try to find the exact chunk text in the full content
-    const index = cleanFullContent.indexOf(cleanChunkText);
+    // Normalize both texts for comparison
+    const normalizedChunkText = normalizeText(chunkText);
+    const normalizedFullContent = normalizeText(fullContent);
+
+    console.log("Normalized chunk text:", normalizedChunkText);
+    console.log(
+      "Normalized full content length:",
+      normalizedFullContent.length
+    );
+
+    // Try to find the exact normalized chunk text in the normalized full content
+    const index = normalizedFullContent.indexOf(normalizedChunkText);
+
+    console.log("Found at normalized index:", index);
 
     if (index === -1) {
-      // If exact match not found, try to find partial matches
-      const words = cleanChunkText.split(" ").filter((word) => word.length > 3);
-      if (words.length > 0) {
-        const highlightedContent = words.reduce((content, word) => {
-          const regex = new RegExp(
-            `(${word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
-            "gi"
-          );
-          return content.replace(
-            regex,
-            '<mark class="bg-yellow-200 text-black px-1 rounded animate-pulse">$1</mark>'
-          );
-        }, fullContent);
+      console.log(
+        "No exact normalized match found, trying alternative methods..."
+      );
 
-        return <div dangerouslySetInnerHTML={{ __html: highlightedContent }} />;
-      } else {
-        // If no significant words found, just return the content
-        return <div>{fullContent}</div>;
+      // If exact match not found, try to find the chunk text in the original content
+      const originalIndex = fullContent
+        .toLowerCase()
+        .indexOf(chunkText.toLowerCase());
+
+      console.log("Found at original index:", originalIndex);
+
+      if (originalIndex !== -1) {
+        // Found match in original content
+        const beforeMatch = fullContent.substring(0, originalIndex);
+        const match = fullContent.substring(
+          originalIndex,
+          originalIndex + chunkText.length
+        );
+        const afterMatch = fullContent.substring(
+          originalIndex + chunkText.length
+        );
+
+        console.log("Highlighting original match");
+
+        return (
+          <>
+            {beforeMatch}
+            <mark className="bg-yellow-200 text-black px-1 rounded animate-pulse">
+              {match}
+            </mark>
+            {afterMatch}
+          </>
+        );
       }
+
+      // If still no match, try to find sentence-level matches
+      const chunkSentences = extractSentences(chunkText);
+      const fullSentences = extractSentences(fullContent);
+
+      console.log(
+        "Trying sentence-level matching with chunk sentences:",
+        chunkSentences
+      );
+      console.log("Available full content sentences:", fullSentences.length);
+
+      if (chunkSentences.length > 0) {
+        // Find all sentence matches and create a map of positions
+        const matches: Array<{ start: number; end: number; text: string }> = [];
+
+        chunkSentences.forEach((sentence) => {
+          const sentenceIndex = fullContent.toLowerCase().indexOf(sentence);
+          console.log(`Sentence "${sentence}" found at index:`, sentenceIndex);
+
+          if (sentenceIndex !== -1) {
+            matches.push({
+              start: sentenceIndex,
+              end: sentenceIndex + sentence.length,
+              text: sentence,
+            });
+          }
+        });
+
+        if (matches.length > 0) {
+          // Sort matches by start position
+          matches.sort((a, b) => a.start - b.start);
+
+          // Create highlighted content using React elements
+          const parts: React.ReactNode[] = [];
+          let lastIndex = 0;
+
+          matches.forEach((match, index) => {
+            // Add text before this match
+            if (match.start > lastIndex) {
+              parts.push(fullContent.substring(lastIndex, match.start));
+            }
+
+            // Add highlighted match
+            parts.push(
+              <mark
+                key={index}
+                className="bg-yellow-200 text-black px-1 rounded animate-pulse"
+              >
+                {fullContent.substring(match.start, match.end)}
+              </mark>
+            );
+
+            lastIndex = match.end;
+          });
+
+          // Add remaining text after last match
+          if (lastIndex < fullContent.length) {
+            parts.push(fullContent.substring(lastIndex));
+          }
+
+          return <>{parts}</>;
+        }
+      }
+
+      // If no sentence matches found, try to find the longest common substring
+      console.log(
+        "No sentence matches found, trying longest common substring..."
+      );
+
+      const words = chunkText.split(/\s+/).filter((word) => word.length > 3);
+      if (words.length > 0) {
+        // Find the longest consecutive sequence of words that appears in the full content
+        let maxLength = 0;
+        let bestMatch = "";
+
+        for (let i = 0; i < words.length; i++) {
+          for (let j = i + 1; j <= words.length; j++) {
+            const phrase = words.slice(i, j).join(" ");
+            if (
+              phrase.length > maxLength &&
+              fullContent.toLowerCase().includes(phrase.toLowerCase())
+            ) {
+              maxLength = phrase.length;
+              bestMatch = phrase;
+            }
+          }
+        }
+
+        if (bestMatch.length > 10) {
+          console.log("Found best phrase match:", bestMatch);
+          const phraseIndex = fullContent
+            .toLowerCase()
+            .indexOf(bestMatch.toLowerCase());
+          const beforePhrase = fullContent.substring(0, phraseIndex);
+          const phraseMatch = fullContent.substring(
+            phraseIndex,
+            phraseIndex + bestMatch.length
+          );
+          const afterPhrase = fullContent.substring(
+            phraseIndex + bestMatch.length
+          );
+
+          return (
+            <>
+              {beforePhrase}
+              <mark className="bg-yellow-200 text-black px-1 rounded animate-pulse">
+                {phraseMatch}
+              </mark>
+              {afterPhrase}
+            </>
+          );
+        }
+      }
+
+      // If no matches found, return original content
+      console.log("No matches found, returning original content");
+      return <div>{fullContent}</div>;
     }
 
-    // If exact match found, highlight the specific section
-    const beforeMatch = fullContent.substring(0, index);
-    const match = fullContent.substring(index, index + cleanChunkText.length);
-    const afterMatch = fullContent.substring(index + cleanChunkText.length);
+    console.log("Exact normalized match found, mapping to original content...");
+
+    // If exact normalized match found, find the corresponding position in original content
+    let originalIndex = 0;
+    let normalizedIndex = 0;
+
+    while (normalizedIndex < index && originalIndex < fullContent.length) {
+      const normalizedChar = normalizedFullContent[normalizedIndex];
+      const originalChar = fullContent[originalIndex];
+
+      if (normalizeText(originalChar) === normalizedChar) {
+        normalizedIndex++;
+      }
+      originalIndex++;
+    }
+
+    console.log("Mapped to original index:", originalIndex);
+
+    // Now highlight the actual chunk text at the found position
+    const beforeMatch = fullContent.substring(0, originalIndex);
+    const match = fullContent.substring(
+      originalIndex,
+      originalIndex + chunkText.length
+    );
+    const afterMatch = fullContent.substring(originalIndex + chunkText.length);
 
     return (
       <>
