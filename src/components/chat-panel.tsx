@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
-import { ArrowUp, ChevronUpDown } from "../assets/icons";
-import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
+import {
+  ArrowUp,
+  // ChevronUpDown
+} from "../assets/icons";
+// import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { useChatActions } from "../store/chat-store";
 
 export default function ChatPanel() {
@@ -98,7 +101,7 @@ export default function ChatPanel() {
         </div>
         <div className="flex items-center justify-between p-1">
           <div className="flex items-center gap-2">
-            <Menu>
+            {/* <Menu>
               <MenuButton className="inline-flex gap-2 items-center justify-center whitespace-nowrap font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 text-sm rounded-full shadow-none focus:ring-0 cursor-pointer">
                 Language
                 <ChevronUpDown className="h-[14px] w-[14px]" />
@@ -120,7 +123,7 @@ export default function ChatPanel() {
                   </button>
                 </MenuItem>
               </MenuItems>
-            </Menu>
+            </Menu> */}
           </div>
 
           <Button
