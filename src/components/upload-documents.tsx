@@ -17,6 +17,7 @@ export default function DocumentUpload({
 }: FileUploadCardProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
+  const [error, setError] = useState<string>("");
 
   const { setUploadProgress } = useSidebarActions();
   const uploadProgress = useUploadProgress();
@@ -32,21 +33,52 @@ export default function DocumentUpload({
 
     if (selectedFiles) {
       const newFiles = Array.from(selectedFiles);
+      const totalFiles = files.length + newFiles.length;
+
+      // Check if total files exceed 5
+      if (totalFiles > 5) {
+        setError("Note: maximum 5 files can be uploaded");
+        return;
+      }
+
+      // Clear any previous errors
+      setError("");
+
       setFiles((prevFiles) => [...prevFiles, ...newFiles]);
+
+      // Track if any upload failed
+      let uploadFailed = false;
+
+      // Only proceed with upload if no errors
       for (const [index, file] of newFiles.entries()) {
+        // Break the loop if a previous upload failed
+        if (uploadFailed) {
+          break;
+        }
+
         setUploadProgress({
           file: file,
           progress: 0,
           fileNumber: index + 1,
           totalFiles: newFiles.length,
         });
-        await uploadFile(file, index, newFiles.length);
+
+        // Upload file and check if it failed
+        const success = await uploadFile(file, index, newFiles.length);
+        if (!success) {
+          uploadFailed = true;
+          break; // Stop uploading remaining files
+        }
       }
       setUploadProgress(null);
     }
   };
 
-  const uploadFile = async (file: File, index: number, totalFiles: number) => {
+  const uploadFile = async (
+    file: File,
+    index: number,
+    totalFiles: number
+  ): Promise<boolean> => {
     const formData = new FormData();
     formData.append("file", file);
 
@@ -58,21 +90,28 @@ export default function DocumentUpload({
         {
           headers: {
             "Content-Type": "multipart/form-data",
-            "Api-Key": "80baf848-f5b9-4bb2-aeb2-62221cdb0db4",
           },
           onUploadProgress: (progressEvent: any) => {
             setUploadProgress({
               file: file,
-              progress: Math.round(progressEvent.progress * 100),
+              progress: Math.round(progressEvent.progress * 100) - 10,
               fileNumber: index + 1,
               totalFiles: totalFiles,
             });
           },
         }
       );
+      setUploadProgress({
+        file: file,
+        progress: 100,
+        fileNumber: index + 1,
+        totalFiles: totalFiles,
+      });
+      return true; // Upload successful
     } catch (error) {
+      setError("Failed to uploading file");
       setUploadProgress(null);
-      console.log("error", error);
+      return false; // Upload failed
     }
   };
 
@@ -137,7 +176,9 @@ export default function DocumentUpload({
       <div className="flex flex-col gap-2">
         <div
           onClick={handleAttachClick}
-          className="relative border-1 border-dashed border-border rounded-sm cursor-pointer w-full px-4 py-10 flex flex-col justify-between"
+          className={`relative border-1 border-dashed rounded-sm cursor-pointer w-full px-4 py-10 flex flex-col justify-between ${
+            error ? "border-red-500" : "border-border"
+          }`}
         >
           <input
             type="file"
@@ -149,11 +190,21 @@ export default function DocumentUpload({
           />
           <div className="flex flex-col gap-16 items-center justify-center h-full">
             <div className="flex flex-col gap-1 items-center justify-center">
-              <button className="inline-flex items-center justify-center bg-accent-blue text-sidebar-primary p-1 h-12 w-12 rounded-full cursor-pointer">
+              <button
+                className={`inline-flex items-center justify-center p-1 h-12 w-12 rounded-full cursor-pointer ${
+                  error
+                    ? "bg-red-500 text-white"
+                    : "bg-accent-blue text-sidebar-primary"
+                }`}
+              >
                 <Upload />
               </button>
-              <span className="text-sm font-medium font-poppins text-foreground">
-                {placeholder}
+              <span
+                className={`text-sm font-medium font-poppins ${
+                  error ? "text-red-600" : "text-foreground"
+                }`}
+              >
+                {error ? "Too many files selected" : placeholder}
               </span>
             </div>
             <span className="text-xs sm:text-sm font-normal font-poppins text-muted-foreground">
@@ -170,8 +221,12 @@ export default function DocumentUpload({
             </div>
           )}
         </div>
-        <span className="text-xs font-normal font-poppins text-secondary-dark">
-          Note: maximum 5 files can be uploaded
+        <span
+          className={`text-xs font-normal font-poppins ${
+            error ? "text-red-600" : "text-secondary-dark"
+          }`}
+        >
+          {error ? error : "Note: maximum 5 files can be uploaded"}
         </span>
         {uploadProgress && (
           <div className="flex flex-col gap-1 w-full overflow-hidden">
