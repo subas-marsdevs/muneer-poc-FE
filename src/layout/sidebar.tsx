@@ -1,5 +1,6 @@
 import { IconPanelLeft, PlusHome } from "../assets/icons";
 import { useSidebarSize, useSidebarActions } from "../store/sidebar-store";
+import SourceViewer from "../components/ui/source-viewer";
 
 const Sidebar = () => {
   const sidebarSize = useSidebarSize();
@@ -50,25 +51,30 @@ const Sidebar = () => {
               sidebarSize !== "small" ? "px-4" : "px-0"
             } py-4 h-full`}
           >
-            <div className="flex flex-col items-center gap-2">
-              {sidebarSize !== "small" && (
-                <button
-                  onClick={() => setIsOpenSourceUpload(true)}
-                  className="flex items-center justify-center gap-2 h-9 w-full py-3 px-5 border border-border rounded-4xl cursor-pointer"
-                >
-                  <PlusHome className="w-4 h-4" />
-                  <span className="text-xs font-poppins">Add Source</span>
-                </button>
-              )}
-              {sidebarSize === "small" && (
-                <button
-                  onClick={() => setIsOpenSourceUpload(true)}
-                  className="cursor-pointer"
-                >
-                  <PlusHome className="w-5 h-5" />
-                </button>
-              )}
-            </div>
+            {/* Show source viewer if open, otherwise show default content */}
+            {sidebarSize === "large" ? (
+              <SourceViewer />
+            ) : (
+              <div className="flex flex-col items-center gap-2">
+                {sidebarSize !== "small" && (
+                  <button
+                    onClick={() => setIsOpenSourceUpload(true)}
+                    className="flex items-center justify-center gap-2 h-9 w-full py-3 px-5 border border-border rounded-4xl cursor-pointer"
+                  >
+                    <PlusHome className="w-4 h-4" />
+                    <span className="text-xs font-poppins">Add Source</span>
+                  </button>
+                )}
+                {sidebarSize === "small" && (
+                  <button
+                    onClick={() => setIsOpenSourceUpload(true)}
+                    className="cursor-pointer"
+                  >
+                    <PlusHome className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

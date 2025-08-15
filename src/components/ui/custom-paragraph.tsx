@@ -55,6 +55,7 @@ import rehypeKatex from "rehype-katex";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import { MemoizedReactMarkdown } from "./markdown";
+import { useSidebarActions } from "../../store/sidebar-store";
 
 // Custom Paragraph Component with Citation Popovers
 export default function CustomParagraph({
@@ -65,6 +66,7 @@ export default function CustomParagraph({
   sources?: any;
 }) {
   const [hoveredCitation, setHoveredCitation] = useState<string | null>(null);
+  const { openSourceViewer } = useSidebarActions();
 
   const processText = (text: string) => {
     if (!/\[\d+\]/.test(text)) {
@@ -79,6 +81,13 @@ export default function CustomParagraph({
         const citationNumber = citationMatch[1];
         const source = sources?.[citationNumber];
 
+        const handleCitationClick = () => {
+          if (source) {
+            // Pass the full chunk text for highlighting in the complete file content
+            openSourceViewer(source);
+          }
+        };
+
         return (
           <span
             key={index}
@@ -87,7 +96,7 @@ export default function CustomParagraph({
             onMouseLeave={() => setHoveredCitation(null)}
           >
             <span
-              //   className="text-sidebar-primary bg-primary-foreground p-1 h-9 w-9  rounded-full shrink-0"
+              onClick={handleCitationClick}
               style={{
                 backgroundColor: "hsl(0 0% 3.9%)",
                 color: "hsl(0 0% 63.9%)",
@@ -99,6 +108,10 @@ export default function CustomParagraph({
                 display: "inline-block",
                 margin: "0 2px",
               }}
+              // className="hover:bg-gray-700 hover:text-gray-300 transition-colors"
+              // title={`Click to view source: ${
+              //   source?.filename || "Unknown file"
+              // }`}
             >
               {citationNumber}
             </span>
@@ -162,7 +175,6 @@ export default function CustomParagraph({
     <p className="whitespace-pre-wrap mb-4">{processChildren(children)}</p>
   );
 }
-
 // p: ({ children }) => {
 //     // Check if the text contains numbered citations [1], [2], [3], etc.
 //     if (!children || typeof children !== "string") {
