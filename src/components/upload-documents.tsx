@@ -1,24 +1,27 @@
 import { useRef, useState } from "react";
-
 import { Upload } from "../assets/icons";
 import axios from "axios";
 import { useSidebarActions, useUploadProgress } from "../store/sidebar-store";
+import { toast } from "react-toastify";
+
 interface FileUploadCardProps {
   label: string | React.ReactNode;
   accept?: string;
   placeholder?: string;
   uploadedDate?: string;
+  onClose?: () => void;
 }
 
 export default function DocumentUpload({
   label,
   accept = ".pdf,.pptx,.xlsx",
   placeholder = "Attach File",
+  onClose,
 }: FileUploadCardProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string>("");
-
+  const [isUploading, setIsUploading] = useState<boolean>(false);
   const { setUploadProgress } = useSidebarActions();
   const uploadProgress = useUploadProgress();
 
@@ -35,42 +38,34 @@ export default function DocumentUpload({
       const newFiles = Array.from(selectedFiles);
       const totalFiles = files.length + newFiles.length;
 
-      // Check if total files exceed 5
       if (totalFiles > 5) {
         setError("Note: maximum 5 files can be uploaded");
         return;
       }
 
-      // Clear any previous errors
       setError("");
-
       setFiles((prevFiles) => [...prevFiles, ...newFiles]);
-
-      // Track if any upload failed
-      let uploadFailed = false;
-
-      // Only proceed with upload if no errors
+      setIsUploading(true);
       for (const [index, file] of newFiles.entries()) {
-        // Break the loop if a previous upload failed
-        if (uploadFailed) {
-          break;
-        }
-
         setUploadProgress({
           file: file,
           progress: 0,
           fileNumber: index + 1,
           totalFiles: newFiles.length,
         });
-
-        // Upload file and check if it failed
         const success = await uploadFile(file, index, newFiles.length);
         if (!success) {
-          uploadFailed = true;
-          break; // Stop uploading remaining files
+          setIsUploading(false);
+          setUploadProgress(null);
+          onClose?.();
+          toast.error("Failed to upload file");
+          return; // Stop uploading remaining files
         }
       }
+      setIsUploading(false);
       setUploadProgress(null);
+      onClose?.();
+      toast.success("Files uploaded successfully");
     }
   };
 
@@ -84,8 +79,8 @@ export default function DocumentUpload({
 
     try {
       await axios.post(
-        // "https://api.escuelajs.co/api/v1/files/upload",
-        `https://api-muneer.marsdevs.com/api/v1/documents/upload`,
+        "https://api.escuelajs.co/api/v1/files/upload",
+        // `https://api-muneer.marsdevs.com/api/v1/documents/upload`,
         formData,
         {
           headers: {
@@ -94,19 +89,13 @@ export default function DocumentUpload({
           onUploadProgress: (progressEvent: any) => {
             setUploadProgress({
               file: file,
-              progress: Math.round(progressEvent.progress * 100) - 10,
+              progress: Math.round(progressEvent.progress * 100),
               fileNumber: index + 1,
               totalFiles: totalFiles,
             });
           },
         }
       );
-      setUploadProgress({
-        file: file,
-        progress: 100,
-        fileNumber: index + 1,
-        totalFiles: totalFiles,
-      });
       return true; // Upload successful
     } catch (error) {
       setError("Failed to uploading file");
@@ -176,49 +165,78 @@ export default function DocumentUpload({
       <div className="flex flex-col gap-2">
         <div
           onClick={handleAttachClick}
-          className={`relative border-1 border-dashed rounded-sm cursor-pointer w-full px-4 py-10 flex flex-col justify-between ${
+          className={`relative border-1 border-dashed rounded-sm cursor-pointer min-h-60  w-full px-4 py-10 flex flex-col justify-between ${
             error ? "border-red-500" : "border-border"
           }`}
         >
-          <input
-            type="file"
-            ref={inputRef}
-            accept={accept}
-            className="hidden"
-            multiple
-            onChange={handleFileChange}
-          />
-          <div className="flex flex-col gap-16 items-center justify-center h-full">
-            <div className="flex flex-col gap-1 items-center justify-center">
-              <button
-                className={`inline-flex items-center justify-center p-1 h-12 w-12 rounded-full cursor-pointer ${
-                  error
-                    ? "bg-red-500 text-white"
-                    : "bg-accent-blue text-sidebar-primary"
-                }`}
+          {isUploading && (
+            <div className="flex items-center justify-center flex-1 text-sidebar-ring">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="animate-spin"
               >
-                <Upload />
-              </button>
-              <span
-                className={`text-sm font-medium font-poppins ${
-                  error ? "text-red-600" : "text-foreground"
-                }`}
-              >
-                {error ? "Too many files selected" : placeholder}
-              </span>
+                <path d="M12 2v4" />
+                <path d="m16.2 7.8 2.9-2.9" />
+                <path d="M18 12h4" />
+                <path d="m16.2 16.2 2.9 2.9" />
+                <path d="M12 18v4" />
+                <path d="m4.9 19.1 2.9-2.9" />
+                <path d="M2 12h4" />
+                <path d="m4.9 4.9 2.9 2.9" />
+              </svg>
             </div>
-            <span className="text-xs sm:text-sm font-normal font-poppins text-muted-foreground">
-              Supported file types: {accept}
-            </span>
-          </div>
-          {files.length > 0 && (
-            <div className="absolute bottom-3 left-5 flex items-end justify-between float-end">
-              <div className="flex flex-col gap-1">
-                <span className="text-xs font-semibold font-poppins text-foreground">
-                  {files.length} files selected
+          )}
+          {!isUploading && (
+            <>
+              <input
+                type="file"
+                ref={inputRef}
+                accept={accept}
+                className="hidden"
+                multiple
+                onChange={handleFileChange}
+              />
+              <div className="flex flex-col gap-16 items-center justify-center h-full">
+                <div className="flex flex-col gap-1 items-center justify-center">
+                  <button
+                    className={`inline-flex items-center justify-center p-1 h-12 w-12 rounded-full cursor-pointer ${
+                      error
+                        ? "bg-red-500 text-white"
+                        : "bg-accent-blue text-sidebar-primary"
+                    }`}
+                  >
+                    <Upload />
+                  </button>
+                  <span
+                    className={`text-sm font-medium font-poppins ${
+                      error ? "text-red-600" : "text-foreground"
+                    }`}
+                  >
+                    {error ? "Too many files selected" : placeholder}
+                  </span>
+                </div>
+                <span className="text-xs sm:text-sm font-normal font-poppins text-muted-foreground">
+                  Supported file types: {accept}
                 </span>
               </div>
-            </div>
+              {files.length > 0 && (
+                <div className="absolute bottom-3 left-5 flex items-end justify-between float-end">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold font-poppins text-foreground">
+                      {files.length} files selected
+                    </span>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
         <span

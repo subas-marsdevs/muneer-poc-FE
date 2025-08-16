@@ -31,6 +31,9 @@ export default function HomePage() {
           label="Add sources"
           accept=".pdf,.pptx,.xlsx"
           placeholder="Drag and drop or click to upload"
+          onClose={() => {
+            setIsOpenSourceUpload(false);
+          }}
         />
       </CustomDialog>
       {!isOpenSourceUpload && uploadProgress && (
