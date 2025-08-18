@@ -95,7 +95,7 @@ export default function CustomParagraph({
           // Get the citation position for fixed positioning
           const rect = event.currentTarget.getBoundingClientRect();
           setPopoverPosition({
-            top: rect.top - 425, // Position above the citation (popover height is ~320px)
+            top: rect.top - 405, // Position above the citation (popover height is ~320px)
             left: rect.left + rect.width / 2,
           });
         };
