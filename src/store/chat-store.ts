@@ -62,10 +62,41 @@ export const useChatActions = () => {
     }
   }, []);
 
+  const updateLastMessageContent = useCallback(
+    (content: Partial<ChatAnswer> & { isLoading?: boolean }) => {
+      if (messages.length > 0) {
+        const lastMessage = messages[messages.length - 1];
+        const { isLoading, ...answerContent } = content;
+
+        const updatedMessage = {
+          ...lastMessage,
+          content: {
+            ...lastMessage.content,
+            ...answerContent,
+            // Ensure sources are properly merged
+            sources: answerContent.sources || lastMessage.content.sources,
+          },
+          ...(isLoading !== undefined && { isLoading }),
+        };
+
+        console.log("Updated message sources:", updatedMessage.content.sources);
+
+        messages = [...messages.slice(0, -1), updatedMessage];
+        notifyListeners();
+      }
+    },
+    []
+  );
+
   const clearMessages = useCallback(() => {
     messages = [];
     notifyListeners();
   }, []);
 
-  return { addMessage, updateLastMessage, clearMessages };
+  return {
+    addMessage,
+    updateLastMessage,
+    updateLastMessageContent,
+    clearMessages,
+  };
 };

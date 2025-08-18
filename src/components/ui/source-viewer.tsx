@@ -95,7 +95,7 @@ export default function SourceViewer() {
         setFileContent(content);
       }
     } catch (err) {
-      console.error("Error fetching file content:", err);
+      // console.error("Error fetching file content:", err);
       setError(
         err instanceof Error ? err.message : "Failed to fetch file content"
       );
@@ -104,8 +104,8 @@ export default function SourceViewer() {
     }
   };
 
-  console.log("fileContent", fileContent);
-  console.log("chunkText", selectedSource?.chunk_text);
+  // console.log("fileContent", fileContent);
+  // console.log("chunkText", selectedSource?.chunk_text);
 
   // Function to normalize text for better matching
   const normalizeText = (text: string): string => {
@@ -244,7 +244,7 @@ export default function SourceViewer() {
         }
 
         if (bestMatch.length > 10) {
-          console.log("Found best phrase match:", bestMatch);
+          // console.log("Found best phrase match:", bestMatch);
           const phraseIndex = fullContent
             .toLowerCase()
             .indexOf(bestMatch.toLowerCase());
@@ -270,11 +270,11 @@ export default function SourceViewer() {
       }
 
       // If no matches found, return original content
-      console.log("No matches found, returning original content");
+      // console.log("No matches found, returning original content");
       return <div>{fullContent}</div>;
     }
 
-    console.log("Exact normalized match found, mapping to original content...");
+    // console.log("Exact normalized match found, mapping to original content...");
 
     // If exact normalized match found, find the corresponding position in original content
     let originalIndex = 0;
@@ -290,7 +290,7 @@ export default function SourceViewer() {
       originalIndex++;
     }
 
-    console.log("Mapped to original index:", originalIndex);
+    // console.log("Mapped to original index:", originalIndex);
 
     // Now highlight the actual chunk text at the found position
     const beforeMatch = fullContent.substring(0, originalIndex);

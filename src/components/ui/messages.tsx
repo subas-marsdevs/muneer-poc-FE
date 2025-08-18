@@ -6,7 +6,6 @@ import CustomParagraph from "./custom-paragraph";
 import { CodeBlock } from "./codeblock";
 import { MemoizedReactMarkdown } from "./markdown";
 import { Citing } from "./custom-link";
-
 import "katex/dist/katex.min.css";
 
 export function BotMessage({
@@ -39,8 +38,13 @@ export function BotMessage({
     );
   }
 
+  console.log("BotMessage sources: --------->>", sources);
+
   return (
     <MemoizedReactMarkdown
+      key={`${message}-${
+        sources ? Object.keys(sources).join(",") : "no-sources"
+      }`}
       rehypePlugins={[
         [rehypeExternalLinks, { target: "_blank" }],
         [rehypeKatex],
@@ -97,7 +101,10 @@ export function BotMessage({
 // Preprocess LaTeX equations to be rendered by KaTeX
 // ref: https://github.com/remarkjs/react-markdown/issues/785
 const preprocessLaTeX = (content: string) => {
-  const blockProcessedContent = content.replace(
+  const messageString =
+    typeof content === "string" ? content : String(content || "");
+
+  const blockProcessedContent = messageString.replace(
     /\\\[([\s\S]*?)\\\]/g,
     (_, equation) => `$$${equation}$$`
   );
