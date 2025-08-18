@@ -77,6 +77,35 @@ export default function ChatMessages() {
     }
   }, [messages, scrollToBottom]);
 
+  // Debug sources
+  // useEffect(() => {
+  //   if (messages.length > 0) {
+  //     const lastMessage = messages[messages.length - 1];
+  //     // console.log("ChatMessages last message:", lastMessage);
+  //     // console.log("ChatMessages last message content:", lastMessage.content);
+  //     // console.log(
+  //     //   "ChatMessages last message sources:",
+  //     //   lastMessage.content.sources
+  //     // );
+  //     // console.log(
+  //     //   "ChatMessages sources type:",
+  //     //   typeof lastMessage.content.sources
+  //     // );
+  //     // console.log(
+  //     //   "ChatMessages sources keys:",
+  //     //   lastMessage.content.sources
+  //     //     ? Object.keys(lastMessage.content.sources)
+  //     //     : "no sources"
+  //     // );
+  //     // console.log(
+  //     //   "ChatMessages sources is empty object:",
+  //     //   JSON.stringify(lastMessage.content.sources) === "{}"
+  //     // );
+  //   }
+  // }, [messages]);
+
+  console.log("messages----------------------------->", messages);
+
   return (
     <div
       id="scroll-container"
@@ -140,6 +169,23 @@ export default function ChatMessages() {
                               message={message.content.answer}
                               sources={message.content.sources}
                             />
+                            {/* Show typing indicator if answer is empty but not loading */}
+                            {!message.content.answer && !message.isLoading && (
+                              <div className="flex items-center gap-1">
+                                <div className="flex space-x-1">
+                                  <div className="w-2 h-2 bg-current rounded-full animate-bounce"></div>
+                                  <div
+                                    className="w-2 h-2 bg-current rounded-full animate-bounce"
+                                    style={{ animationDelay: "0.1s" }}
+                                  ></div>
+                                  <div
+                                    className="w-2 h-2 bg-current rounded-full animate-bounce"
+                                    style={{ animationDelay: "0.2s" }}
+                                  ></div>
+                                </div>
+                                <span className="text-xs">AI is typing...</span>
+                              </div>
+                            )}
                             {/* <Markdown remarkPlugins={[remarkGfm]}>
                               {message.content.answer}
                             </Markdown> */}

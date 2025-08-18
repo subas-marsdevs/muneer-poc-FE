@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "./ui/button";
 import {
   ArrowUp,
@@ -6,12 +6,86 @@ import {
 } from "../assets/icons";
 // import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { useChatActions } from "../store/chat-store";
+import { websocketService } from "../services/websocket-service";
 
 export default function ChatPanel() {
   const [isLoading, setIsLoading] = useState(false);
   const [input, setInput] = useState("");
-  const { addMessage, updateLastMessage } = useChatActions();
-  // const messages = useChatMessages();
+  // const [isConnected, setIsConnected] = useState(false);
+  const { addMessage, updateLastMessageContent } = useChatActions();
+  const currentAnswerRef = useRef("");
+  const isConnectedRef = useRef(false);
+
+  useEffect(() => {
+    // Connect to WebSocket when component mounts
+    websocketService.connect(
+      "wss://api-muneer.marsdevs.com/api/v1/chat/agent/ws"
+    );
+
+    // Set up event handlers
+    websocketService.onConnectMessage(() => {
+      console.log("WebSocket connected successfully");
+      // setIsConnected(true);
+    });
+
+    websocketService.onChunkMessage((content: string) => {
+      console.log("Received chunk:", content);
+      console.log("Current answer before update:", currentAnswerRef.current);
+
+      // Add a small delay to make the streaming more visible
+      setTimeout(() => {
+        currentAnswerRef.current += content;
+        console.log("Current answer after update:", currentAnswerRef.current);
+        updateLastMessageContent({
+          answer: currentAnswerRef.current,
+          isLoading: false, // Set loading to false when we receive the first chunk
+        });
+      }, 1000); // 50ms delay between chunks
+    });
+
+    websocketService.onSourcesMessage((sources: { [key: string]: any }) => {
+      console.log("Received sources in chat panel:", sources);
+      // console.log("Sources type:", typeof sources);
+      // console.log("Sources keys:", Object.keys(sources));
+      // console.log("Sources content:", sources);
+      updateLastMessageContent({ sources });
+      setIsLoading(false);
+    });
+
+    websocketService.onErrorMessage((error: string) => {
+      console.error("WebSocket error:", error);
+      // setIsConnected(false);
+      updateLastMessageContent({
+        answer: "Sorry, there was an error processing your request.",
+        isLoading: false,
+      });
+      setIsLoading(false);
+    });
+
+    websocketService.onCloseMessage(() => {
+      // console.log("WebSocket closed");
+      // setIsConnected(false);
+      isConnectedRef.current = false;
+      setIsLoading(false);
+    });
+
+    // Add connection status tracking
+    const checkConnection = () => {
+      if (websocketService.isConnected()) {
+        // setIsConnected(true);
+      } else {
+        // setIsConnected(false);
+      }
+    };
+
+    // Check connection status after a short delay
+    setTimeout(checkConnection, 1000);
+
+    // Cleanup on unmount
+    return () => {
+      websocketService.disconnect();
+    };
+  }, [updateLastMessageContent]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,6 +94,7 @@ export default function ChatPanel() {
     const question = input.trim();
     setInput("");
     setIsLoading(true);
+    currentAnswerRef.current = ""; // Reset current answer
 
     // Create initial message with loading state
     const initialMessage = {
@@ -32,44 +107,23 @@ export default function ChatPanel() {
       isLoading: true,
     };
 
+    // console.log("Creating initial message:", initialMessage);
     addMessage(initialMessage);
+    // console.log("Initial message added to store");
 
     try {
-      const response = await fetch(
-        `https://api-muneer.marsdevs.com/api/v1/chat/agent`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            query: question,
-            // Add any other required fields
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      console.log("data", data);
-
-      // Update message with response
-      updateLastMessage({
-        ...initialMessage,
-        content: { ...data },
-        isLoading: false,
+      // Send message via WebSocket
+      websocketService.sendMessage({
+        query: question,
+        // Add any other required fields
       });
+
+      isConnectedRef.current = true;
     } catch (error) {
-      console.error("Error sending message:", error);
-      updateLastMessage({
-        ...initialMessage,
-        content: {
-          answer: "Sorry, there was an error processing your request.",
-          sources: {},
-        },
-        isLoading: false,
+      updateLastMessageContent({
+        answer: "Sorry, there was an error processing your request.",
+        sources: {},
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -101,6 +155,17 @@ export default function ChatPanel() {
         </div>
         <div className="flex items-center justify-between p-1">
           <div className="flex items-center gap-2">
+            {/* Connection status indicator */}
+            {/* <div className="flex items-center gap-1">
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  isConnected ? "bg-green-500" : "bg-red-500"
+                }`}
+              />
+              <span className="text-xs text-muted-foreground">
+                {isConnected ? "Connected" : "Disconnected"}
+              </span>
+            </div> */}
             {/* <Menu>
               <MenuButton className="inline-flex gap-2 items-center justify-center whitespace-nowrap font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 text-sm rounded-full shadow-none focus:ring-0 cursor-pointer">
                 Language

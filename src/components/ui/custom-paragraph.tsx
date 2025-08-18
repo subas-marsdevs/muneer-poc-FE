@@ -49,7 +49,7 @@
 // }
 
 import { useState } from "react";
-import { Popover } from "@headlessui/react";
+// import { Popover } from "@headlessui/react";
 import rehypeExternalLinks from "rehype-external-links";
 import rehypeKatex from "rehype-katex";
 import remarkGfm from "remark-gfm";
@@ -66,6 +66,7 @@ export default function CustomParagraph({
   sources?: any;
 }) {
   const [hoveredCitation, setHoveredCitation] = useState<string | null>(null);
+  const [popoverPosition, setPopoverPosition] = useState({ top: 0, left: 0 });
   const { openSourceViewer } = useSidebarActions();
 
   const processText = (text: string) => {
@@ -80,6 +81,7 @@ export default function CustomParagraph({
       if (citationMatch) {
         const citationNumber = citationMatch[1];
         const source = sources?.[citationNumber];
+        const citationId = `${citationNumber}-${index}`; // Unique ID for each citation instance
 
         const handleCitationClick = () => {
           if (source) {
@@ -88,12 +90,27 @@ export default function CustomParagraph({
           }
         };
 
+        const handleMouseEnter = (event: React.MouseEvent) => {
+          setHoveredCitation(citationId);
+          // Get the citation position for fixed positioning
+          const rect = event.currentTarget.getBoundingClientRect();
+          setPopoverPosition({
+            top: rect.top - 425, // Position above the citation (popover height is ~320px)
+            left: rect.left + rect.width / 2,
+          });
+        };
+
+        const handleMouseLeave = () => {
+          setHoveredCitation(null);
+        };
+
         return (
           <span
             key={index}
             className="relative inline-block"
-            onMouseEnter={() => setHoveredCitation(citationNumber)}
-            onMouseLeave={() => setHoveredCitation(null)}
+            style={{ overflow: "visible" }}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
           >
             <span
               onClick={handleCitationClick}
@@ -117,9 +134,18 @@ export default function CustomParagraph({
             </span>
 
             {/* Popover */}
-            {hoveredCitation === citationNumber && source && (
-              <Popover className="w-96 absolute bottom-full left-auto right-auto transform -translate-x-1/2 bg-popover z-50 shadow-md rounded-md">
-                <div className="bg-popover border border-border rounded-lg shadow-lg py-3">
+            {hoveredCitation === citationId && source && (
+              <div
+                className="w-96 bg-popover z-[9999] shadow-md rounded-md"
+                style={{
+                  position: "fixed",
+                  top: `${popoverPosition.top}px`,
+                  left: `${popoverPosition.left}px`,
+                  transform: "translateX(-50%)",
+                  overflow: "visible",
+                }}
+              >
+                <div className="bg-popover border border-border rounded-lg shadow-lg py-3 relative">
                   <div className="text-sm">
                     <div className="font-medium text-foreground mb-1 px-3">
                       {source.filename}
@@ -147,7 +173,7 @@ export default function CustomParagraph({
                   {/* Arrow */}
                   <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-popover"></div>
                 </div>
-              </Popover>
+              </div>
             )}
           </span>
         );
